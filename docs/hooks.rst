@@ -202,9 +202,17 @@ operation. There is no specific operation to indicate a "restart" is occurring.
 
       /etc/libvirt/hooks/qemu guest_name started begin -
 
--  When a QEMU guest is stopped, the qemu hook script is called in two
-   locations, to match the startup. First, :since:`since 0.8.0`, the hook is
-   called before libvirt restores any labels:
+-  When a QEMU guest is stopped, the qemu hook script is called in three
+   locations, to match the startup. The first location, :since:`since 11.10.0`,
+   is called before the domain is stopped. This allows the hook to perform
+   cleanup tasks or veto the stop operation by returning a non-zero exit code:
+
+   ::
+
+      /etc/libvirt/hooks/qemu guest_name stop begin -
+
+   The second location, :since:`since 0.8.0`, is called after the QEMU process
+   has terminated but before libvirt restores any labels:
 
    ::
 

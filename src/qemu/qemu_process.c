@@ -9015,6 +9015,23 @@ qemuProcessBeginStopJob(virDomainObj *vm,
     qemuDomainObjPrivate *priv = vm->privateData;
     unsigned int killFlags = forceKill ? VIR_QEMU_PROCESS_KILL_FORCE : 0;
 
+    /* call stop hook if present */
+    if (virHookPresent(VIR_HOOK_DRIVER_QEMU)) {
+        virQEMUDriver *driver = priv->driver;
+        g_autofree char *xml = qemuDomainDefFormatXML(driver, NULL, vm->def, 0);
+        int hookret;
+
+        if (!xml)
+            return -1;
+
+        hookret = virHookCall(VIR_HOOK_DRIVER_QEMU, vm->def->name,
+                              VIR_HOOK_QEMU_OP_STOP, VIR_HOOK_SUBOP_BEGIN,
+                              NULL, xml, NULL);
+
+        if (hookret < 0)
+            return -1;
+    }
+
     /* We need to prevent monitor EOF callback from doing our work (and
      * sending misleading events) while the vm is unlocked inside
      * BeginJob/ProcessKill API or any other code path before 'vm->def->id' is
